@@ -17,7 +17,7 @@ This sample demonstrates how to use the Microsoft Graph, while being authenticat
 
 2. Clone the code.
   ```
-  git clone https://github.com/https://github.com/jmprieur/v2jsapp.git/v2jsapp.git
+  git clone https://github.com/jmprieur/v2jsapp.git
   ```
 
 3. Inside index.html, set your application/client id from the App Registration Portal. 
