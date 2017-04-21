@@ -12,32 +12,77 @@
     </style>
 </head>
 <body>
-
-    <h1>Authentication with msal.js</h1>
-
     <script src="msal.js" class="pre"></script>
     <script src="AuthenticationHandler.js" class="pre"></script>
 
-    <div id="label">Sign-in with Microsoft</div>
-    <button id="auth" onclick="login();">Login</button>
-
+    <h1>Sending an email with msal.js and Microsoft Graph</h1>
+    <div>
+        <div id="label">Sign-in with Microsoft</div>
+        <button id="auth" onclick="login();">Login</button>
+    </div>
     <div id="sendEmail" class="hidden">
         <input id="emailToSendTo" type="text" />
         <button id="auth" onclick="sendEmail();">Send email</button>
     </div>
 
-<pre class="response"></pre>
+    <pre class="response"></pre>
 
     <script class="pre">
         var applicationConfig = {
             clientID: '2730fe41-5ed4-446e-86cd-e58871ca001e',
-            redirectUri: 'http://localhost:1530/redirect.html',
+            redirectUri: 'http://localhost:1530/',
             interactionMode: "popUp",
             graphEndpoint: "https://graph.microsoft.com/v1.0/me",
-            graphScopes: ["user.read", "mail.send"]
+            graphScopes: ["user.read mail.send"]
 
         };
+    </script>
 
+
+    <script>
+        // MSAL helpers
+        // ------------
+        // Initialize MSAL libraries by setting the Client Id and a callback
+        // @config - variable containing basic configuration, such as Client Id, interaction mode, and Redirect Url
+        // @authCallback - callback function to be called after sign-in completes.
+        function createApplication(config, authCallback) {
+            var userAgentApplication = new MSAL.UserAgentApplication(config.clientID, null, authCallback);
+            userAgentApplication.redirectUri = config.redirectUri;
+            userAgentApplication.interactionMode = config.interactionMode;
+
+            // On page load, check if the token is present in the location hash and handle it
+            var isCallback = userAgentApplication.isCallback(window.location.hash);
+            if (isCallback) {
+                userAgentApplication.handleAuthenticationResponse(window.location.hash);
+            }
+            return userAgentApplication;
+        }
+
+        var clientApplication;
+
+        // Get an access token for a given scope
+        // @scope: permissions (for instance Microsoft Graph scope)
+        // @callback: callback function to be called with the token, or otherwise, and error.
+        function getAccessToken(scope, callback) {
+            clientApplication.acquireTokenSilent(scope, function callBackendApiCallback(errorDescription, token, error) {
+                if (error) {
+                    clientApplication.interactionMode = applicationConfig.interactionMode;
+                    clientApplication.acquireToken(scope, function (error, token) {
+                        if (token) {
+                            callback(token, null);
+                        }
+                        if (error) {
+                            callback(null, error);
+                        }
+                    });
+                } else {
+                    callback(token, errorDescription);
+                }
+            });
+        }
+    </script>
+
+    <script>
         clientApplication = createApplication(applicationConfig, function (errorDescription, idToken, error) {
             if (idToken) {
                 // Change button to Sign Out
@@ -53,6 +98,9 @@
                 var emailAddress = document.getElementById('emailToSendTo');
                 emailAddress.value = clientApplication.user.username;
             }
+            else {
+                log(errorDescription);
+            }
         });
 
         function login() {
@@ -62,11 +110,27 @@
         function logout() {
             // Removes all sessions, need to call AAD endpoint to do full logout
             clientApplication.logout();
+        }
 
-            // Change button to Sign in
-            var authButton = document.getElementById('auth');
-            authButton.innerHTML = "Login";
-            authButton.setAttribute('onclick', 'login();');
+        function sendEmail() {
+            getAccessToken(applicationConfig.graphScopes, function (token, error) {
+                if (token) {
+                    var client = new XMLHttpRequest();
+                    client.setRequestHeader("bearer", token);
+                    client.open("POST", applicationConfig.graphEndpoint, false);
+                    client.setRequestHeader("Content-Type", "text/json");
+                    client.send({ 'message': email, 'saveToSentItems': true });
+                    if (http.status == 200) {
+
+                    }
+                    else {
+                        log(client.status + " " + client.statusText);
+                    }
+                }
+                else {
+                    log("Acquiring the token failed with error:" + error);
+                }
+            })
         }
     </script>
 
