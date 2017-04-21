@@ -1,40 +1,28 @@
 ---
 services: active-directory
 platforms: javascript
-author: danieldobalian
+author: jmprieur
 ---
 
 # Sign in Azure AD + MSA Users using Javascript Open Source Library
 
-> [!NOTE]
-> This sample is using a 3rd party library that has been tested for compatibility in basic scenarios with the v2.0 endpoint.  Microsoft does not provide fixes for these libraries and has not done a review of these libraries.  Issues and feature requests should be directed to the library's open-source project.  Please see this [document](https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-v2-libraries) for more information.   
-> 
->
-
-This sample demonstrates how to use Azure AD with a 3rd party Javascript library ([hello.js](https://github.com/MrSwitch/hello.js)) to do oAuth 2.0 against the v2.0 endpoint.  hello.js also provides code for calling web API's which we have preconfigured to support the Microsoft Graph /me endpoint, and have created the structure for future MS Graph calls.  
+This sample demonstrates how to use the Microsoft Graph, while being authenticated with  msal.js (doing oAuth 2.0 against the AAD v2.0 endpoint)  
 
 ## Steps to Run
 
-1. Install hello.js.
-
-  ```
-  npm install -g bower
-  bower install hello
-  ```
-
-2. Register your Azure AD v2.0 app. 
+1. Register your Azure AD v2.0 app. 
     - Navigate to the [App Registration Portal](https://identity.microsoft.com). 
     - Go to the the `My Apps` page, click `Add an App`, and name your app.  
-    - Set a platform by clicking `Add Platform`, select `Web`, and add a Redirect URI of ```http://localhost:8000/redirect.html```.
+    - Set a platform by clicking `Add Platform`, select `Web`, and add a Redirect URI of ```http://localhost:8000/```.
 
-3. Clone the code.
+2. Clone the code.
   ```
-  git clone https://github.com/danieldobalian/v2jsapp.git
+  git clone https://github.com/https://github.com/jmprieur/v2jsapp.git/v2jsapp.git
   ```
 
-4. Inside index.html, set your application/client id from the App Registration Portal. 
+3. Inside index.html, set your application/client id from the App Registration Portal. 
 
-5. Run the web app for port 8000, and navigate to http://localhost:8000. If you have Python installed you can run the following command, 
+4. Run the web app for port 8000, and navigate to http://localhost:8000. If you have Python installed you can run the following command, 
 
   ```
   python -m SimpleHTTPServer 8000
@@ -48,6 +36,4 @@ This sample was tested with hello.js v1.13.5, Google Chrome version 55.0, and ma
 
 ## Acknowledgements
 
-This sample was adapted from the hello.js templates.  Thanks to [Brandon Werner](https://github.com/xerners) for doing the initial testing and preparing much of the code. 
-
-[hello.js](https://github.com/MrSwitch/hello.js)
+This sample was adapted from the hello.js sample: https://github.com/Azure-Samples/active-directory-javascript-graphapi-web-v2
