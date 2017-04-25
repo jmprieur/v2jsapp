@@ -6,7 +6,7 @@ author: jmprieur
 
 # Sign in Azure AD + MSA Users using Javascript Open Source Library
 
-This sample demonstrates how to use the Microsoft Graph, while being authenticated with  msal.js (doing oAuth 2.0 against the AAD v2.0 endpoint)  
+This simple sample demonstrates how to use the Microsoft Graph to send an email after being authenticated with msal.js. (doing oAuth 2.0 against the AAD v2.0 endpoint). It does not require any Single Page Application Framework.
 
 ## Steps to Run
 
@@ -32,7 +32,7 @@ This sample demonstrates how to use the Microsoft Graph, while being authenticat
 
 Please file any questions or problems with the sample as a github issue.  You can also post on StackOverflow with the tag ```azure-active-directory```.  For oAuth2.0 library issues, please see note above. 
 
-This sample was tested with hello.js v1.13.5, Google Chrome version 55.0, and macOS 10.11.
+This sample was with Google Chrome version 57.0 and Edge on Windows 10.
 
 ## Acknowledgements
 
