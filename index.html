@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>authentication with msal.js app</title>
+    <title>authentication with Msal.js app</title>
     <style>
         .hidden {
             visibility: hidden
@@ -33,20 +33,19 @@
             redirectUri: 'http://localhost:1530/',
             interactionMode: "popUp",
             graphEndpoint: "https://graph.microsoft.com/v1.0/me/sendMail",
-            graphScopes: ["user.read mail.send"]
+            graphScopes: ["user.read", "mail.send"]
 
         };
     </script>
 
-
     <script>
-        // MSAL helpers
+        // Msal helpers
         // ------------
-        // Initialize MSAL libraries by setting the Client Id and a callback
+        // Initialize Msal libraries by setting the Client Id and a callback
         // @config - variable containing basic configuration, such as Client Id, interaction mode, and Redirect Url
         // @authCallback - callback function to be called after sign-in completes.
         function createApplication(config, authCallback) {
-            var userAgentApplication = new MSAL.UserAgentApplication(config.clientID, null, authCallback);
+            var userAgentApplication = new Msal.UserAgentApplication(config.clientID, null, authCallback);
             userAgentApplication.redirectUri = config.redirectUri;
             userAgentApplication.interactionMode = config.interactionMode;
 
@@ -59,52 +58,27 @@
         }
 
         var clientApplication;
-
-        // Get an access token for a given scope
-        // @scope: permissions (for instance Microsoft Graph scope)
-        // @callback: callback function to be called with the token, or otherwise, and error.
-        function getAccessToken(scope, callback) {
-            clientApplication.acquireTokenSilent(scope, function callBackendApiCallback(errorDescription, token, error) {
-                if (error) {
-                    clientApplication.interactionMode = applicationConfig.interactionMode;
-                    clientApplication.acquireToken(scope, function (error, token) {
-                        if (token) {
-                            callback(token, null);
-                        }
-                        if (error) {
-                            callback(null, error);
-                        }
-                    });
-                } else {
-                    callback(token, errorDescription);
-                }
-            });
-        }
     </script>
 
     <script>
-        clientApplication = createApplication(applicationConfig, function (errorDescription, idToken, error) {
-            if (idToken) {
-                // Change button to Sign Out
-                var authButton = document.getElementById('auth');
-                authButton.innerHTML = 'logout';
-                authButton.setAttribute('onclick', 'logout();');
-                var label = document.getElementById('label');
-                label.innerText = "Hello " + clientApplication.user.profile.name + "! Please send an email with Microsoft Graph";
-
-                // Show the email address part
-                var sendEmailSpan = document.getElementById('sendEmail');
-                sendEmailSpan.className = "visible";
-                var emailAddress = document.getElementById('emailToSendTo');
-                emailAddress.value = clientApplication.user.username;
-            }
-            else {
-                log(errorDescription);
-            }
-        });
+        clientApplication = createApplication(applicationConfig);
 
         function login() {
-            clientApplication.login();
+            clientApplication.loginPopup(applicationConfig.graphScopes)
+                .then(function (idToken) {
+                    // Change button to Sign Out
+                    var authButton = document.getElementById('auth');
+                    authButton.innerHTML = 'logout';
+                    authButton.setAttribute('onclick', 'logout();');
+                    var label = document.getElementById('label');
+                    label.innerText = "Hello " + clientApplication.user.profile.name + "! Please send an email with Microsoft Graph";
+
+                    // Show the email address part
+                    var sendEmailSpan = document.getElementById('sendEmail');
+                    sendEmailSpan.className = "visible";
+                    var emailAddress = document.getElementById('emailToSendTo');
+                    emailAddress.value = clientApplication.user.username;
+                });
         }
 
         function logout() {
@@ -113,14 +87,14 @@
         }
 
         function sendEmail() {
-            getAccessToken(applicationConfig.graphScopes, function (token, error) {
-                if (token) {
+            clientApplication.acquireTokenSilent(applicationConfig.graphScopes)
+                .then(function (token, error) {
                     $.ajax({
                         type: "POST",
                         contentType: "application/json",
                         dataType: 'json',
                         beforeSend: function (request) {
-                            request.setRequestHeader('Authorization', 'bearer '+token);
+                            request.setRequestHeader('Authorization', 'bearer ' + token);
                         },
                         url: applicationConfig.graphEndpoint,
                         data: JSON.stringify({ 'message': getEmail(), 'saveToSentItems': true }),
@@ -129,11 +103,7 @@
                             log("Mail sucessfully sent.");
                         }
                     });
-                }
-                else {
-                    log("Acquiring the token failed with error:" + error);
-                }
-            })
+                });
         }
     </script>
 
@@ -142,10 +112,9 @@
             document.body.querySelector('.response').appendChild(document.createTextNode("\n\n" + JSON.stringify(s, true, 2)));
         }
 
-        function getEmail()
-        {
+        function getEmail() {
             var email = {
-                Subject: 'Welcome to Microsoft Graph development with msal and the Microsoft Graph sample',
+                Subject: 'Welcome to Microsoft Graph development with Msal and the Microsoft Graph sample',
                 Body: {
                     ContentType: 'HTML',
                     Content: getEmailContent()
@@ -164,9 +133,6 @@
         function getEmailContent() {
             return "<html><head> <meta http-equiv=\'Content-Type\' content=\'text/html; charset=us-ascii\'> <title></title> </head><body style=\'font-family:calibri\'> <p>Congratulations " + clientApplication.user.profile.name + ",</p> <p>This is a message from the Microsoft Graph Connect sample. You are well on your way to incorporating Microsoft Graph endpoints in your apps. </p> <h3>What&#8217;s next?</h3><ul><li>Check out <a href='https://graph.microsoft.io' target='_blank'>graph.microsoft.io</a> to start building Microsoft Graph apps today with all the latest tools, templates, and guidance to get started quickly.</li><li>Use the <a href='https://graph.microsoft.io/graph-explorer' target='_blank'>Graph explorer</a> to explore the rest of the APIs and start your testing.</li><li>Browse other <a href='https://github.com/microsoftgraph/' target='_blank'>samples on GitHub</a> to see more of the APIs in action.</li></ul> <h3>Give us feedback</h3> <ul><li>If you have any trouble running this sample, please <a href='https://github.com/microsoftgraph/angular-connect-rest-sample/issues' target='_blank'>log an issue</a>.</li><li>For general questions about the Microsoft Graph API, post to <a href='https://stackoverflow.com/questions/tagged/microsoftgraph?sort=newest' target='blank'>Stack Overflow</a>. Make sure that your questions or comments are tagged with [microsoftgraph].</li></ul><p>Thanks and happy coding!<br>Your Microsoft Graph samples development team</p> <div style=\'text-align:center; font-family:calibri\'> <table style=\'width:100%; font-family:calibri\'> <tbody> <tr> <td><a href=\'https://github.com/microsoftgraph/angular-connect-rest-sample\'>See on GitHub</a> </td> <td><a href=\'https://officespdev.uservoice.com/\'>Suggest on UserVoice</a> </td> <td><a href=\'https://twitter.com/share?text=I%20just%20started%20developing%20%23Angular%20apps%20using%20the%20%23MicrosoftGraph%20Connect%20sample!%20&url=https://github.com/microsoftgraph/angular-connect-rest-sample\'>Share on Twitter</a> </td> </tr> </tbody> </table> </div>  </body> </html>";
         };
-
     </script>
-
 </body>
-
 </html>
