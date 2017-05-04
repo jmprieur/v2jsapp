@@ -1,5 +1,7 @@
 <html>
 <head>
+    <!-- msal?js was built for the ES5 standard so that it works with IE11
+        The bluebird promises polyfill is therefore needed -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bluebird/3.3.4/bluebird.min.js"></script>
     <script src="public/msal.js" class="pre"></script>
     <title>authentication with Msal.js app</title>
@@ -34,53 +36,77 @@
             redirectUri: 'http://localhost:1530/',
             interactionMode: "popUp",
             graphEndpoint: "https://graph.microsoft.com/v1.0/me/sendMail",
-            graphScopes: ["user.read", "mail.send"]
-
+            graphScopes: ["user.read", "mail.send"],
         };
+
+        // loginPopup is not supported in IE, so if one wants to support this browser, one needs to use loginRedirect instead of loginPopup
+        var useLoginRedirect = true;
     </script>
 
     <script>
         // Msal helpers
         // ------------
         // Initialize Msal libraries by setting the Client Id and a callback
-        // @config - variable containing basic configuration, such as Client Id, interaction mode, and Redirect Url
+        // @config - variable containing basic configuration, such as Client Id, interaction mode, and Redirect Uri
         // @authCallback - callback function to be called after sign-in completes.
+        // Note that the method initializes clientApplication (and also returns it)
         function createApplication(config, authCallback) {
-            var userAgentApplication = new Msal.UserAgentApplication(config.clientID, null, authCallback);
-            userAgentApplication.redirectUri = config.redirectUri;
-            userAgentApplication.interactionMode = config.interactionMode;
+            clientApplication = new Msal.UserAgentApplication(config.clientID, null, authCallback);
+            clientApplication.redirectUri = config.redirectUri;
+            clientApplication.interactionMode = config.interactionMode;
 
             // On page load, check if the token is present in the location hash and handle it
-            var isCallback = userAgentApplication.isCallback(window.location.hash);
+            var isCallback = clientApplication.isCallback(window.location.hash);
             if (isCallback) {
-                userAgentApplication.handleAuthenticationResponse(window.location.hash);
+                clientApplication.handleAuthenticationResponse(window.location.hash);
             }
-            return userAgentApplication;
+            return clientApplication;
         }
 
         var clientApplication;
-    </script>
 
-    <script>
-        function loginCallback(idToken) {
-            // Change button to Sign Out
-            var authButton = document.getElementById('auth');
-            authButton.innerHTML = 'logout';
-            authButton.setAttribute('onclick', 'logout();');
-            var label = document.getElementById('label');
-            label.innerText = "Hello " + clientApplication.getUser().name + "! Please send an email with Microsoft Graph";
+        function onAuthentication(idToken) {
+            return clientApplication.acquireTokenSilent(applicationConfig.graphScopes)
+                .then(function (accessToken) {
+                    // Change button to Sign Out
+                    var authButton = document.getElementById('auth');
+                    authButton.innerHTML = 'logout';
+                    authButton.setAttribute('onclick', 'logout();');
+                    var label = document.getElementById('label');
+                    label.innerText = "Hello " + clientApplication.getUser().name + "! Please send an email with Microsoft Graph";
 
-            // Show the email address part
-            var sendEmailSpan = document.getElementById('sendEmail');
-            sendEmailSpan.className = "visible";
-            var emailAddress = document.getElementById('emailToSendTo');
-            emailAddress.value = clientApplication.getUser().displayableId;
+                    // Show the email address part
+                    var sendEmailSpan = document.getElementById('sendEmail');
+                    sendEmailSpan.className = "visible";
+                    var emailAddress = document.getElementById('emailToSendTo');
+                    emailAddress.value = clientApplication.getUser().displayableId;
+                });
         }
 
-        clientApplication = createApplication(applicationConfig);
+        // The authentication callback is needed when we use loginRedirect - for instance IE
+        function authenticationCallback(errorDesc, idToken) {
+            if (idToken) {
+                onAuthentication(idToken);
+            }
+            else {
+                log(errorDesc);
+            }
+        }
 
+        // Create the application (two different patterns depending on whether we want a popup (not for IE) or a redirect)
+        if (useLoginRedirect) {
+            createApplication(applicationConfig, authenticationCallback);
+        } else {
+            createApplication(applicationConfig);
+        }
+
+        // Login (two different patterns depending on whether we want a popup (not for IE) or a redirect)
         function login() {
-            clientApplication.loginPopup(applicationConfig.graphScopes).then(loginCallback);
+            if (useLoginRedirect) {
+                clientApplication.loginRedirect(applicationConfig.graphScopes);
+            } else {
+                clientApplication.loginPopup(applicationConfig.graphScopes).then(onAuthentication);
+            }
         }
 
         function logout() {
