@@ -5,3 +5,5 @@
 /.vs
 /bower_components/hello
 /bower_components/hello
+/node_modules
+/node_modules
