@@ -1,5 +1,7 @@
 <html>
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bluebird/3.3.4/bluebird.min.js"></script>
+    <script src="public/msal.js" class="pre"></script>
     <title>authentication with Msal.js app</title>
     <style>
         .hidden {
@@ -12,7 +14,6 @@
     </style>
 </head>
 <body>
-    <script src="public/msal.js" class="pre"></script>
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" class="pre"></script>
 
     <h1>Sending an email with msal.js and Microsoft Graph</h1>
@@ -71,13 +72,13 @@
                     authButton.innerHTML = 'logout';
                     authButton.setAttribute('onclick', 'logout();');
                     var label = document.getElementById('label');
-                    label.innerText = "Hello " + clientApplication.user.name + "! Please send an email with Microsoft Graph";
+                    label.innerText = "Hello " + clientApplication.getUser().name + "! Please send an email with Microsoft Graph";
 
                     // Show the email address part
                     var sendEmailSpan = document.getElementById('sendEmail');
                     sendEmailSpan.className = "visible";
                     var emailAddress = document.getElementById('emailToSendTo');
-                    emailAddress.value = clientApplication.user.displayableId;
+                    emailAddress.value = clientApplication.getUser().displayableId;
                 });
         }
 
@@ -127,7 +128,7 @@
                 ToRecipients: [
                     {
                         EmailAddress: {
-                            Address: clientApplication.user.displayableId
+                            Address: clientApplication.getUser().displayableId
                         }
                     }
                 ]
